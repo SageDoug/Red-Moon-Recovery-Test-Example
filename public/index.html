@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Red Moon Recovery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--crimson:#C0392B;--rose:#E8604C;--blush:#F2A59E;--soft-pink:#FDECEA;--petal:#FFF5F4;--cream:#FFFAF9;--dark:#2C1A18;--muted:#8C5A55;--border:#F0C8C3;--white:#FFFFFF;--shadow:rgba(192,57,43,0.12);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 20%,rgba(242,165,158,0.18) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 90% 80%,rgba(192,57,43,0.08) 0%,transparent 55%);pointer-events:none;z-index:0;}
+
+    /* HEADER */
+    header{position:sticky;top:0;z-index:100;background:rgba(255,250,249,0.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:62px;}
+    .logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--crimson);display:flex;align-items:center;gap:0.4rem;}
+    nav{display:flex;gap:0.2rem;}
+    nav button{background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;color:var(--muted);padding:0.4rem 0.85rem;border-radius:20px;transition:all 0.2s;}
+    nav button:hover,nav button.active{background:var(--soft-pink);color:var(--crimson);}
+    .user-chip{display:flex;align-items:center;gap:0.6rem;font-size:0.82rem;color:var(--muted);}
+    .user-chip strong{color:var(--crimson);}
+    .btn-logout{background:none;border:1.5px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.78rem;padding:0.3rem 0.8rem;border-radius:20px;cursor:pointer;transition:all 0.2s;}
+    .btn-logout:hover{border-color:var(--crimson);color:var(--crimson);}
+
+    /* PAGES */
+    .page{display:none;animation:fadeIn 0.35s ease;position:relative;z-index:1;}
+    .page.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+    /* AUTH */
+    #auth-screen{position:fixed;inset:0;background:var(--cream);z-index:200;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+    #auth-screen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 20%,rgba(242,165,158,0.22) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 90% 80%,rgba(192,57,43,0.1) 0%,transparent 55%);pointer-events:none;}
+    .auth-box{background:var(--white);border:1px solid var(--border);border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;box-shadow:0 8px 40px var(--shadow);position:relative;z-index:1;}
+    .auth-logo{text-align:center;margin-bottom:1.8rem;}
+    .auth-logo .moon{font-size:3rem;display:block;animation:float 4s ease-in-out infinite;}
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+    .auth-logo h1{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--crimson);font-weight:400;}
+    .auth-logo p{font-size:0.82rem;color:var(--muted);margin-top:0.3rem;}
+    .auth-tabs{display:flex;background:var(--petal);border-radius:12px;padding:4px;margin-bottom:1.6rem;}
+    .auth-tab{flex:1;text-align:center;padding:0.6rem;border-radius:9px;font-size:0.85rem;font-weight:500;cursor:pointer;transition:all 0.2s;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;}
+    .auth-tab.active{background:var(--white);color:var(--crimson);box-shadow:0 2px 8px var(--shadow);}
+    .auth-form{display:none;}.auth-form.active{display:block;}
+    .auth-err{background:#fff0ef;border:1px solid #fcc;border-radius:10px;padding:0.7rem 1rem;font-size:0.82rem;color:var(--crimson);margin-bottom:1rem;display:none;}
+
+    /* LAYOUT */
+    .section-wrap{max-width:860px;margin:0 auto;padding:2.2rem 1.5rem 4rem;}
+    .section-title{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;color:var(--dark);margin-bottom:0.3rem;}
+    .section-subtitle{font-size:0.87rem;color:var(--muted);margin-bottom:1.8rem;font-weight:300;}
+
+    /* CARDS */
+    .card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:1.8rem;margin-bottom:1.4rem;box-shadow:0 2px 14px var(--shadow);}
+    .card h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--crimson);margin-bottom:1.1rem;display:flex;align-items:center;gap:0.45rem;}
+
+    /* FORMS */
+    .form-row{margin-bottom:1rem;}
+    .form-row label{display:block;font-size:0.78rem;font-weight:500;color:var(--muted);margin-bottom:0.35rem;letter-spacing:0.04em;text-transform:uppercase;}
+    .form-row input[type=text],.form-row input[type=email],.form-row input[type=password],.form-row input[type=date],.form-row input[type=number],.form-row select,.form-row textarea{width:100%;background:var(--petal);border:1.5px solid var(--border);border-radius:10px;padding:0.65rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--dark);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+    .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,96,76,0.1);}
+    .form-row textarea{resize:vertical;min-height:68px;}
+    .check-group{display:flex;flex-wrap:wrap;gap:0.45rem;}
+    .check-pill{display:flex;align-items:center;gap:0.35rem;background:var(--petal);border:1.5px solid var(--border);border-radius:20px;padding:0.38rem 0.85rem;font-size:0.8rem;color:var(--dark);cursor:pointer;transition:all 0.18s;user-select:none;}
+    .check-pill input{display:none;}
+    .check-pill:hover{border-color:var(--blush);background:var(--soft-pink);}
+    .check-pill.selected{background:linear-gradient(135deg,var(--crimson),var(--rose));border-color:transparent;color:white;}
+    .scale-row{display:flex;align-items:center;gap:0.9rem;}
+    .scale-row input[type=range]{flex:1;-webkit-appearance:none;height:5px;border-radius:3px;background:linear-gradient(to right,var(--rose) 0%,var(--rose) var(--val,50%),var(--border) var(--val,50%));outline:none;}
+    .scale-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--crimson);box-shadow:0 2px 8px var(--shadow);cursor:pointer;}
+    .scale-val{min-width:2rem;text-align:center;font-weight:600;font-size:1rem;color:var(--crimson);}
+
+    /* BUTTONS */
+    .btn-primary{background:linear-gradient(135deg,var(--crimson),var(--rose));color:white;border:none;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;padding:0.78rem 2rem;border-radius:50px;cursor:pointer;box-shadow:0 5px 20px var(--shadow);transition:all 0.22s;letter-spacing:0.02em;width:100%;}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 9px 28px var(--shadow);}
+    .btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+    .btn-sm{width:auto;padding:0.65rem 1.5rem;font-size:0.85rem;}
+    .btn-secondary{background:none;border:1.5px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;padding:0.62rem 1.4rem;border-radius:50px;cursor:pointer;transition:all 0.2s;}
+    .btn-secondary:hover{border-color:var(--rose);color:var(--crimson);}
+    .btn-ghost{background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;color:var(--muted);padding:0.3rem 0.6rem;border-radius:8px;transition:all 0.2s;}
+    .btn-ghost:hover{background:var(--soft-pink);color:var(--crimson);}
+
+    /* PROGRESS */
+    .progress-bar{height:4px;background:var(--border);border-radius:4px;margin-bottom:1.8rem;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--crimson),var(--rose));transition:width 0.4s ease;}
+    .step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.8rem;}
+
+    /* HERO */
+    .hero{text-align:center;padding:4rem 1.5rem 2.5rem;max-width:680px;margin:0 auto;}
+    .hero-moon{font-size:4rem;display:block;margin-bottom:1rem;animation:float 4s ease-in-out infinite;}
+    .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.2rem);font-weight:300;line-height:1.2;color:var(--dark);margin-bottom:0.9rem;}
+    .hero h1 em{color:var(--crimson);font-style:italic;}
+    .hero p{font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:2rem;font-weight:300;}
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;max-width:820px;margin:2.5rem auto 0;padding:0 1.5rem;}
+    .feat-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:1.4rem;text-align:center;box-shadow:0 2px 10px var(--shadow);transition:transform 0.2s;}
+    .feat-card:hover{transform:translateY(-3px);}
+    .feat-card .icon{font-size:1.9rem;margin-bottom:0.6rem;display:block;}
+    .feat-card h3{font-size:0.88rem;font-weight:600;color:var(--crimson);margin-bottom:0.3rem;}
+    .feat-card p{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+
+    /* LOG GRID */
+    .log-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+    @media(max-width:560px){.log-grid{grid-template-columns:1fr;}}
+
+    /* DASHBOARD */
+    .cycle-ring{width:100px;height:100px;margin:0 auto 1rem;position:relative;}
+    .cycle-ring svg{transform:rotate(-90deg);}
+    .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--crimson);}
+    .ring-label span{font-size:0.65rem;font-family:'DM Sans';color:var(--muted);font-weight:400;}
+    .phase-badge{display:inline-flex;align-items:center;gap:0.35rem;padding:0.28rem 0.8rem;border-radius:20px;font-size:0.75rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
+    .phase-menstrual{background:#ffe0de;color:#a33;}.phase-follicular{background:#fdf0e0;color:#a07020;}.phase-ovulatory{background:#e0f8e8;color:#1a7a40;}.phase-luteal{background:#e8e0f8;color:#5030a0;}
+    .entry-row{border-bottom:1px solid var(--border);padding:0.85rem 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;}
+    .entry-row:last-child{border-bottom:none;}
+    .entry-meta{font-size:0.78rem;color:var(--muted);margin-top:0.2rem;}
+    .entry-tags{display:flex;gap:0.45rem;flex-wrap:wrap;}
+    .etag{font-size:0.72rem;background:var(--soft-pink);color:var(--crimson);padding:0.18rem 0.6rem;border-radius:10px;}
+    .del-btn{background:none;border:1px solid #fcc;color:#c66;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.72rem;cursor:pointer;transition:all 0.18s;}
+    .del-btn:hover{background:#fff0ef;border-color:var(--crimson);color:var(--crimson);}
+
+    /* ══ AI CHAT ══ */
+    .chat-layout{display:grid;grid-template-columns:220px 1fr;gap:1.2rem;align-items:start;}
+    @media(max-width:700px){.chat-layout{grid-template-columns:1fr;}}
+
+    /* Sidebar */
+    .chat-sidebar{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 2px 14px var(--shadow);}
+    .sidebar-header{padding:1rem 1.1rem 0.8rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .sidebar-header h4{font-size:0.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;}
+    .new-chat-btn{background:linear-gradient(135deg,var(--crimson),var(--rose));border:none;color:white;border-radius:50%;width:26px;height:26px;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.2s;}
+    .new-chat-btn:hover{transform:scale(1.1);}
+    .session-list{max-height:340px;overflow-y:auto;}
+    .session-item{padding:0.75rem 1.1rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;display:flex;align-items:center;justify-content:space-between;gap:0.4rem;}
+    .session-item:last-child{border-bottom:none;}
+    .session-item:hover{background:var(--petal);}
+    .session-item.active{background:var(--soft-pink);}
+    .session-item .s-name{font-size:0.82rem;font-weight:500;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+    .session-item .s-date{font-size:0.7rem;color:var(--muted);}
+    .session-item .s-del{opacity:0;background:none;border:none;color:#c66;cursor:pointer;font-size:0.75rem;padding:0.1rem 0.3rem;border-radius:4px;transition:opacity 0.2s;}
+    .session-item:hover .s-del{opacity:1;}
+
+    /* Insights panel */
+    .insights-panel{padding:1rem 1.1rem;border-top:1px solid var(--border);}
+    .insights-panel h4{font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.7rem;}
+    .insight-tag{font-size:0.74rem;background:var(--soft-pink);color:var(--crimson);padding:0.3rem 0.65rem;border-radius:10px;margin-bottom:0.4rem;display:block;line-height:1.4;}
+    .insight-tag .cat{font-weight:600;text-transform:uppercase;font-size:0.65rem;display:block;margin-bottom:0.1rem;opacity:0.7;}
+
+    /* Main chat */
+    .chat-main{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 4px 24px var(--shadow);display:flex;flex-direction:column;}
+    .chat-header{background:linear-gradient(135deg,var(--crimson),var(--rose));padding:1rem 1.4rem;display:flex;align-items:center;gap:0.75rem;}
+    .chat-avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+    .chat-header-info h3{color:white;font-size:0.95rem;font-weight:600;}
+    .chat-header-info p{color:rgba(255,255,255,0.8);font-size:0.72rem;}
+    .chat-session-name{color:rgba(255,255,255,0.7);font-size:0.72rem;margin-left:auto;font-style:italic;}
+
+    .chat-messages{flex:1;height:420px;overflow-y:auto;padding:1.4rem;display:flex;flex-direction:column;gap:1rem;background:var(--petal);}
+    .msg{display:flex;gap:0.6rem;align-items:flex-end;animation:msgIn 0.28s ease;}
+    @keyframes msgIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;}}
+    .msg.bot{flex-direction:row;}.msg.user{flex-direction:row-reverse;}
+    .bubble{max-width:78%;padding:0.75rem 1.1rem;border-radius:18px;font-size:0.86rem;line-height:1.6;}
+    .msg.bot .bubble{background:white;border:1px solid var(--border);color:var(--dark);border-bottom-left-radius:4px;}
+    .msg.user .bubble{background:linear-gradient(135deg,var(--crimson),var(--rose));color:white;border-bottom-right-radius:4px;}
+    .bot-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--crimson),var(--rose));display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;}
+
+    /* Typing indicator */
+    .typing-bubble{display:flex;gap:4px;align-items:center;padding:0.75rem 1.1rem;}
+    .typing-bubble span{width:7px;height:7px;border-radius:50%;background:var(--blush);animation:bounce 1.2s infinite;}
+    .typing-bubble span:nth-child(2){animation-delay:0.2s;}
+    .typing-bubble span:nth-child(3){animation-delay:0.4s;}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-6px);}}
+
+    /* Suggested questions */
+    .suggestions{padding:0.7rem 1.2rem 0;display:flex;flex-wrap:wrap;gap:0.4rem;}
+    .sug-btn{background:var(--soft-pink);border:1.5px solid var(--border);border-radius:20px;padding:0.34rem 0.9rem;font-size:0.76rem;color:var(--crimson);font-weight:500;cursor:pointer;transition:all 0.18s;font-family:'DM Sans',sans-serif;}
+    .sug-btn:hover{background:var(--crimson);color:white;border-color:transparent;}
+
+    .chat-input-row{display:flex;gap:0.6rem;padding:0.9rem 1.2rem;border-top:1px solid var(--border);background:white;}
+    .chat-input-row input{flex:1;border:1.5px solid var(--border);border-radius:50px;padding:0.65rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:0.86rem;outline:none;background:var(--petal);transition:border-color 0.2s;}
+    .chat-input-row input:focus{border-color:var(--rose);}
+    .chat-input-row input:disabled{opacity:0.6;}
+    .send-btn{background:linear-gradient(135deg,var(--crimson),var(--rose));border:none;border-radius:50%;width:40px;height:40px;color:white;font-size:1rem;cursor:pointer;transition:transform 0.2s,opacity 0.2s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .send-btn:hover:not(:disabled){transform:scale(1.08);}
+    .send-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+    /* MISC */
+    #toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:white;padding:0.75rem 1.7rem;border-radius:50px;font-size:0.84rem;font-weight:500;opacity:0;transition:all 0.3s;z-index:999;pointer-events:none;white-space:nowrap;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .divider{height:1px;background:var(--border);margin:1.3rem 0;}
+    .success-box{text-align:center;padding:2.2rem 1.5rem;}
+    .success-box .big-icon{font-size:3.2rem;margin-bottom:0.9rem;display:block;}
+    .success-box h2{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--crimson);}
+    .success-box p{color:var(--muted);font-size:0.88rem;margin-top:0.5rem;}
+    .empty-state{text-align:center;padding:2rem;color:var(--muted);font-size:0.87rem;}
+    .api-warning{background:#fff8e1;border:1px solid #ffe082;border-radius:12px;padding:0.9rem 1.1rem;font-size:0.83rem;color:#7a5c00;margin-bottom:1rem;display:none;}
+    @media(max-width:600px){header{padding:0 0.9rem;}.section-wrap{padding:1.4rem 1rem 3rem;}.card{padding:1.3rem 1.1rem;}nav button{padding:0.35rem 0.55rem;font-size:0.74rem;}}
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo"><span class="moon">🌕</span><h1>Red Moon Recovery</h1><p>Train with your cycle, not against it.</p></div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+    <div class="auth-form active" id="auth-login">
+      <div class="auth-err" id="login-err"></div>
+      <div class="form-row"><label>Username</label><input type="text" id="li-user" placeholder="your username" autocomplete="username"/></div>
+      <div class="form-row"><label>Password</label><input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button class="btn-primary" onclick="doLogin()" id="btn-login">Sign In</button>
+    </div>
+    <div class="auth-form" id="auth-register">
+      <div class="auth-err" id="reg-err"></div>
+      <div class="form-row"><label>Username</label><input type="text" id="reg-user" placeholder="choose a username"/></div>
+      <div class="form-row"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com"/></div>
+      <div class="form-row"><label>Password</label><input type="password" id="reg-pass" placeholder="at least 6 characters"/></div>
+      <button class="btn-primary" onclick="doRegister()" id="btn-register">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<header>
+  <div class="logo">🌕 Red Moon Recovery</div>
+  <nav id="app-nav">
+    <button class="active" onclick="showPage('home',this)">Home</button>
+    <button onclick="showPage('onboard',this)">Profile</button>
+    <button onclick="showPage('journal',this)">Journal</button>
+    <button onclick="showPage('bot',this)">AI Guide</button>
+    <button onclick="showPage('dashboard',this)">Dashboard</button>
+  </nav>
+  <div class="user-chip"><span>👋 <strong id="header-username"></strong></span><button class="btn-logout" onclick="doLogout()">Sign Out</button></div>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <div id="home" class="page active">
+    <div class="hero">
+      <span class="hero-moon">🌕</span>
+      <h1>Train with your cycle,<br/><em>not against it.</em></h1>
+      <p>Red Moon Recovery helps athletes map their menstrual cycle to performance, recovery, and wellbeing — so every training block is smarter, safer, and more effective.</p>
+      <button class="btn-primary btn-sm" onclick="showPage('onboard',document.querySelector('#app-nav button:nth-child(2)'))">Start Your Profile →</button>
+    </div>
+    <div class="features">
+      <div class="feat-card"><span class="icon">📋</span><h3>Onboarding</h3><p>Set your baseline — age, cycle status, goals, and upcoming event dates.</p></div>
+      <div class="feat-card"><span class="icon">📓</span><h3>Daily Journal</h3><p>Log physical metrics, symptoms, mood, and training performance each day.</p></div>
+      <div class="feat-card"><span class="icon">🔄</span><h3>Reverse Mapping</h3><p>Predict your cycle phase for any upcoming race or competition date.</p></div>
+      <div class="feat-card"><span class="icon">🤖</span><h3>AI Guide</h3><p>Chat with Luna — a real AI that knows your data and grows with you.</p></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="onboard" class="page">
+    <div class="section-wrap" style="max-width:760px;">
+      <div class="section-title">Your Profile</div>
+      <div class="section-subtitle">Saved to your account — loads automatically every sign-in.</div>
+      <div class="progress-bar"><div class="progress-fill" id="ob-progress" style="width:33%"></div></div>
+      <div id="ob-step-1" class="card">
+        <h3>🌸 Essential Information</h3>
+        <div class="form-row"><label>Your Name</label><input type="text" id="ob-name" placeholder="e.g. Alex Johnson"/></div>
+        <div class="form-row"><label>Age</label><input type="number" id="ob-age" min="13" max="60" placeholder="e.g. 26"/></div>
+        <div class="form-row"><label>Current Cycle Status</label>
+          <div class="check-group" id="ob-cycle-status">
+            <label class="check-pill" onclick="selectOne(this,'ob-cycle-status')"><input type="radio"/>Regular Cycle</label>
+            <label class="check-pill" onclick="selectOne(this,'ob-cycle-status')"><input type="radio"/>On Hormonal Birth Control</label>
+            <label class="check-pill" onclick="selectOne(this,'ob-cycle-status')"><input type="radio"/>Experiencing Amenorrhea</label>
+            <label class="check-pill" onclick="selectOne(this,'ob-cycle-status')"><input type="radio"/>Irregular</label>
+          </div>
+        </div>
+        <div class="step-nav"><span></span><button class="btn-primary btn-sm" onclick="obNext(2)">Next →</button></div>
+      </div>
+      <div id="ob-step-2" class="card" style="display:none">
+        <h3>🎯 Your Goals</h3>
+        <div class="form-row"><label>Primary Goals (select all that apply)</label>
+          <div class="check-group" id="ob-goals">
+            <label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Injury Prevention</label>
+            <label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Performance Maximization</label>
+            <label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Anxiety Control</label>
+            <label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Optimize Recovery</label>
+            <label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Hormonal Balance</label>
+          </div>
+        </div>
+        <div class="form-row"><label>Sport / Activity</label><input type="text" id="ob-sport" placeholder="e.g. Running, CrossFit, Soccer"/></div>
+        <div class="step-nav"><button class="btn-secondary" onclick="obNext(1)">← Back</button><button class="btn-primary btn-sm" onclick="obNext(3)">Next →</button></div>
+      </div>
+      <div id="ob-step-3" class="card" style="display:none">
+        <h3>📅 Events &amp; Training History</h3>
+        <div class="form-row"><label>Upcoming Competition / Event Date (optional)</label><input type="date" id="ob-event-date"/></div>
+        <div class="form-row"><label>Desired Phase for Event</label>
+          <select id="ob-desired-phase"><option value="">— Select —</option><option>Follicular (peak strength &amp; energy)</option><option>Ovulatory (peak performance window)</option><option>Luteal (steady endurance)</option><option>Menstrual (rest &amp; recovery focus)</option></select>
+        </div>
+        <div class="form-row"><label>How many full cycles of data do you have?</label>
+          <select id="ob-cycles-data"><option value="">— Select —</option><option>None yet (just starting)</option><option>1 cycle</option><option>2 cycles</option><option>3+ cycles (best accuracy)</option></select>
+        </div>
+        <div class="form-row"><label>Current Training Load</label>
+          <div class="check-group" id="ob-training-load">
+            <label class="check-pill" onclick="selectOne(this,'ob-training-load')"><input type="radio"/>Light (1–3x/wk)</label>
+            <label class="check-pill" onclick="selectOne(this,'ob-training-load')"><input type="radio"/>Moderate (4–5x/wk)</label>
+            <label class="check-pill" onclick="selectOne(this,'ob-training-load')"><input type="radio"/>Heavy (6–7x/wk)</label>
+          </div>
+        </div>
+        <div class="form-row"><label>History of ACL or soft-tissue injuries?</label>
+          <div class="check-group" id="ob-acl">
+            <label class="check-pill" onclick="selectOne(this,'ob-acl')"><input type="radio"/>No</label>
+            <label class="check-pill" onclick="selectOne(this,'ob-acl')"><input type="radio"/>Yes</label>
+          </div>
+        </div>
+        <div class="step-nav"><button class="btn-secondary" onclick="obNext(2)">← Back</button><button class="btn-primary btn-sm" onclick="saveProfile()" id="btn-save-profile">Save Profile ✓</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div id="journal" class="page">
+    <div class="section-wrap" style="max-width:800px;">
+      <div class="section-title">Daily Journal</div>
+      <div class="section-subtitle">Every entry is saved to your account. Update at least weekly — daily is best.</div>
+      <div class="card" style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end;padding:1.2rem 1.4rem;">
+        <div class="form-row" style="margin:0;flex:1;min-width:140px;"><label>Date</label><input type="date" id="j-date"/></div>
+        <div class="form-row" style="margin:0;flex:1;min-width:110px;"><label>Cycle Day</label><input type="number" id="j-cycle-day" min="1" max="35" placeholder="e.g. 14"/></div>
+        <div style="flex:2;min-width:220px;">
+          <label style="font-size:0.78rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:0.35rem;">Phase</label>
+          <div class="check-group" id="j-phase">
+            <label class="check-pill" onclick="selectOne(this,'j-phase')"><input type="radio"/>🔴 Menstrual</label>
+            <label class="check-pill" onclick="selectOne(this,'j-phase')"><input type="radio"/>🌱 Follicular</label>
+            <label class="check-pill" onclick="selectOne(this,'j-phase')"><input type="radio"/>✨ Ovulatory</label>
+            <label class="check-pill" onclick="selectOne(this,'j-phase')"><input type="radio"/>🍂 Luteal</label>
+          </div>
+        </div>
+      </div>
+      <div class="log-grid">
+        <div class="card">
+          <h3>❤️ Physical Metrics</h3>
+          <div class="form-row"><label>Waking HRV / Heart Rate</label><input type="text" id="j-hrv" placeholder="e.g. HRV 62, HR 56"/></div>
+          <div class="form-row"><label>Sleep Quality (1–10)</label><div class="scale-row"><input type="range" min="1" max="10" value="5" id="j-sleep-quality" oninput="updateScale(this,'j-sq-val')"/><span class="scale-val" id="j-sq-val">5</span></div></div>
+          <div class="form-row"><label>Sleep Hours</label><input type="number" id="j-sleep-hrs" min="1" max="14" placeholder="e.g. 8"/></div>
+          <div class="form-row"><label>Energy Level</label>
+            <div class="check-group" id="j-energy">
+              <label class="check-pill" onclick="selectOne(this,'j-energy')"><input type="radio"/>⚡ High</label>
+              <label class="check-pill" onclick="selectOne(this,'j-energy')"><input type="radio"/>➡️ Steady</label>
+              <label class="check-pill" onclick="selectOne(this,'j-energy')"><input type="radio"/>🪫 Low</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Muscle/Joint Soreness</label>
+            <div class="check-group" id="j-soreness">
+              <label class="check-pill" onclick="selectOne(this,'j-soreness')"><input type="radio"/>None</label>
+              <label class="check-pill" onclick="selectOne(this,'j-soreness')"><input type="radio"/>Normal</label>
+              <label class="check-pill" onclick="selectOne(this,'j-soreness')"><input type="radio"/>Sharp/Specific</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Pain Location / Notes</label><input type="text" id="j-pain-notes" placeholder="e.g. left knee niggle"/></div>
+        </div>
+        <div class="card">
+          <h3>🏃 Training Performance</h3>
+          <div class="form-row"><label>Today's Workout</label><input type="text" id="j-workout" placeholder="e.g. 8km tempo run"/></div>
+          <div class="form-row"><label>RPE (1–10)</label><div class="scale-row"><input type="range" min="1" max="10" value="5" id="j-rpe" oninput="updateScale(this,'j-rpe-val')"/><span class="scale-val" id="j-rpe-val">5</span></div></div>
+          <div class="form-row"><label>Motivation to Train (1–10)</label><div class="scale-row"><input type="range" min="1" max="10" value="5" id="j-motivation" oninput="updateScale(this,'j-mot-val')"/><span class="scale-val" id="j-mot-val">5</span></div></div>
+          <div class="form-row"><label>Performance Notes</label><textarea id="j-perf-notes" placeholder="e.g. felt powerful, hit PR, heavy legs…"></textarea></div>
+        </div>
+        <div class="card">
+          <h3>🌸 Cycle Symptoms</h3>
+          <div class="form-row"><label>Flow Status</label>
+            <div class="check-group" id="j-flow">
+              <label class="check-pill" onclick="selectOne(this,'j-flow')"><input type="radio"/>None</label><label class="check-pill" onclick="selectOne(this,'j-flow')"><input type="radio"/>Spotting</label><label class="check-pill" onclick="selectOne(this,'j-flow')"><input type="radio"/>Light</label><label class="check-pill" onclick="selectOne(this,'j-flow')"><input type="radio"/>Medium</label><label class="check-pill" onclick="selectOne(this,'j-flow')"><input type="radio"/>Heavy</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Cramps / Pelvic Pain</label>
+            <div class="check-group" id="j-cramps">
+              <label class="check-pill" onclick="selectOne(this,'j-cramps')"><input type="radio"/>None</label><label class="check-pill" onclick="selectOne(this,'j-cramps')"><input type="radio"/>Mild</label><label class="check-pill" onclick="selectOne(this,'j-cramps')"><input type="radio"/>Distracting</label><label class="check-pill" onclick="selectOne(this,'j-cramps')"><input type="radio"/>Severe</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Cervical Mucus</label>
+            <div class="check-group" id="j-mucus">
+              <label class="check-pill" onclick="selectOne(this,'j-mucus')"><input type="radio"/>Dry</label><label class="check-pill" onclick="selectOne(this,'j-mucus')"><input type="radio"/>Sticky</label><label class="check-pill" onclick="selectOne(this,'j-mucus')"><input type="radio"/>Creamy</label><label class="check-pill" onclick="selectOne(this,'j-mucus')"><input type="radio"/>Egg White</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Digestive Notes</label><input type="text" id="j-digestion" placeholder="e.g. bloating, regular"/></div>
+          <div class="form-row"><label>Symptom Start Time</label>
+            <div class="check-group" id="j-sym-time">
+              <label class="check-pill" onclick="selectOne(this,'j-sym-time')"><input type="radio"/>Morning</label><label class="check-pill" onclick="selectOne(this,'j-sym-time')"><input type="radio"/>Afternoon</label><label class="check-pill" onclick="selectOne(this,'j-sym-time')"><input type="radio"/>Evening</label><label class="check-pill" onclick="selectOne(this,'j-sym-time')"><input type="radio"/>N/A</label>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>🧠 Cognitive &amp; Psychological</h3>
+          <div class="form-row"><label>Mood / Outlook</label>
+            <div class="check-group" id="j-mood">
+              <label class="check-pill" onclick="selectOne(this,'j-mood')"><input type="radio"/>😊 Confident</label><label class="check-pill" onclick="selectOne(this,'j-mood')"><input type="radio"/>🎯 Focused</label><label class="check-pill" onclick="selectOne(this,'j-mood')"><input type="radio"/>😟 Anxious</label><label class="check-pill" onclick="selectOne(this,'j-mood')"><input type="radio"/>😤 Irritable</label><label class="check-pill" onclick="selectOne(this,'j-mood')"><input type="radio"/>🌑 Reclusive</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Cognitive Function</label>
+            <div class="check-group" id="j-cog">
+              <label class="check-pill" onclick="selectOne(this,'j-cog')"><input type="radio"/>🌊 Flow State</label><label class="check-pill" onclick="selectOne(this,'j-cog')"><input type="radio"/>➡️ Normal</label><label class="check-pill" onclick="selectOne(this,'j-cog')"><input type="radio"/>🌫️ Brain Fog</label>
+            </div>
+          </div>
+          <div class="form-row"><label>Social Inclination</label>
+            <div class="check-group" id="j-social">
+              <label class="check-pill" onclick="selectOne(this,'j-social')"><input type="radio"/>Social</label><label class="check-pill" onclick="selectOne(this,'j-social')"><input type="radio"/>Neutral</label><label class="check-pill" onclick="selectOne(this,'j-social')"><input type="radio"/>Withdrawing</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🥗 Nutrition &amp; Recovery</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-row" style="margin:0"><label>Cravings</label><input type="text" id="j-cravings" placeholder="e.g. salty, sweet, carbs"/></div>
+          <div class="form-row" style="margin:0"><label>Hydration</label>
+            <div class="check-group" id="j-hydration">
+              <label class="check-pill" onclick="selectOne(this,'j-hydration')"><input type="radio"/>💧 Excellent</label><label class="check-pill" onclick="selectOne(this,'j-hydration')"><input type="radio"/>🆗 Sufficient</label><label class="check-pill" onclick="selectOne(this,'j-hydration')"><input type="radio"/>🏜️ Dehydrated</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:1rem"><label>Recovery Steps Taken</label>
+          <div class="check-group" id="j-recovery">
+            <label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Stretching</label><label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Foam Rolling</label><label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Nap</label><label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Extra Protein</label><label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Ice Bath</label><label class="check-pill" onclick="togglePill(this)"><input type="checkbox"/>Meditation</label>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;"><button class="btn-primary btn-sm" onclick="saveJournal()" id="btn-save-journal">Save Today's Entry ✓</button></div>
+    </div>
+  </div>
+
+  <!-- AI GUIDE -->
+  <div id="bot" class="page">
+    <div class="section-wrap">
+      <div class="section-title">AI Cycle Guide</div>
+      <div class="section-subtitle">Luna knows your journal data and profile. Ask her anything about your cycle, training, recovery, or upcoming events.</div>
+      <div class="api-warning" id="api-warning">⚠️ <strong>API key not configured.</strong> Get a free key at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> and add it as a Codespace secret named <code>GEMINI_API_KEY</code>. See the README for step-by-step instructions.</div>
+      <div class="chat-layout">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+          <div class="sidebar-header">
+            <h4>Conversations</h4>
+            <button class="new-chat-btn" onclick="startNewChat()" title="New chat">+</button>
+          </div>
+          <div class="session-list" id="session-list"></div>
+          <div class="insights-panel">
+            <h4>Luna's Insights</h4>
+            <div id="insights-list"><p style="font-size:0.75rem;color:var(--muted);">Chat with Luna to unlock insights about your patterns.</p></div>
+          </div>
+        </div>
+        <!-- Main chat -->
+        <div class="chat-main">
+          <div class="chat-header">
+            <div class="chat-avatar">🌙</div>
+            <div class="chat-header-info"><h3>Luna — Red Moon AI</h3><p>Powered by Claude · Knows your data</p></div>
+            <span class="chat-session-name" id="chat-session-label"></span>
+          </div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="suggestions" id="suggestions"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Ask Luna anything about your cycle…" onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendChat()"/>
+            <button class="send-btn" onclick="sendChat()" id="send-btn">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="page">
+    <div class="section-wrap" style="max-width:800px;">
+      <div class="section-title">Your Dashboard</div>
+      <div class="section-subtitle">All data pulled from your saved account entries.</div>
+      <div class="log-grid" style="margin-bottom:1.4rem;">
+        <div class="card" style="text-align:center;">
+          <div class="cycle-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#F0C8C3" stroke-width="7"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#rg)" stroke-width="7" stroke-dasharray="264" stroke-dashoffset="132" stroke-linecap="round" id="ring-arc"/>
+              <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#C0392B"/><stop offset="100%" stop-color="#E8604C"/></linearGradient></defs>
+            </svg>
+            <div class="ring-label" id="dash-cycle-day">—<span>cycle day</span></div>
+          </div>
+          <div id="dash-phase" class="phase-badge phase-follicular">Loading…</div>
+          <p style="font-size:0.76rem;color:var(--muted);margin-top:0.7rem;">From your last journal entry</p>
+        </div>
+        <div class="card"><h3>⚡ Insights</h3><div id="dash-insights"><p class="empty-state">Log entries to unlock insights.</p></div></div>
+      </div>
+      <div class="card">
+        <h3>📅 Reverse Mapping</h3>
+        <p style="font-size:0.83rem;color:var(--muted);margin-bottom:1.1rem;">Enter an upcoming event to see which cycle phase you'll likely be in.</p>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-row" style="margin:0;flex:1;min-width:140px;"><label>Event Date</label><input type="date" id="rm-date"/></div>
+          <div class="form-row" style="margin:0;flex:1;min-width:140px;"><label>Avg Cycle Length</label><input type="number" id="rm-cycle-len" value="28" min="21" max="40"/></div>
+          <div class="form-row" style="margin:0;flex:1;min-width:140px;"><label>Last Period Start</label><input type="date" id="rm-last-period"/></div>
+          <button class="btn-primary btn-sm" onclick="calcReverseMap()">Calculate</button>
+        </div>
+        <div id="rm-result" style="margin-top:1.1rem;display:none;"><div class="divider"></div><div id="rm-result-content"></div></div>
+      </div>
+      <div class="card">
+        <h3>📓 All Journal Entries</h3>
+        <div id="all-entries"><p class="empty-state">No entries yet.</p></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+function toast(msg,dur=2800){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function selectOne(el,group){document.querySelectorAll(`#${group} .check-pill`).forEach(p=>p.classList.remove('selected'));el.classList.add('selected');}
+function togglePill(el){el.classList.toggle('selected');}
+function updateScale(input,valId){$(valId).textContent=input.value;const pct=((input.value-input.min)/(input.max-input.min))*100;input.style.setProperty('--val',pct+'%');}
+function showPage(id,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('#app-nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');if(id==='dashboard')loadDashboard();if(id==='bot')initChatPage();window.scrollTo({top:0,behavior:'smooth'});}
+function setBtn(id,loading,text){const b=$(id);b.disabled=loading;b.innerHTML=loading?`<span class="spinner"></span>`:text;}
+
+// ── AUTH ──
+function switchAuthTab(tab){document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));document.querySelector(`.auth-tab[onclick="switchAuthTab('${tab}')"]`).classList.add('active');$(`auth-${tab}`).classList.add('active');}
+function showAuthErr(id,msg){const e=$(id);e.textContent=msg;e.style.display='block';}
+function clearAuthErr(id){$(id).style.display='none';}
+
+async function doLogin(){clearAuthErr('login-err');const username=$('li-user').value.trim(),password=$('li-pass').value;if(!username||!password)return showAuthErr('login-err','Please fill in both fields.');setBtn('btn-login',true);const d=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})}).then(r=>r.json());setBtn('btn-login',false,'Sign In');if(d.success)launchApp(d.username);else showAuthErr('login-err',d.error);}
+async function doRegister(){clearAuthErr('reg-err');const username=$('reg-user').value.trim(),email=$('reg-email').value.trim(),password=$('reg-pass').value;if(!username||!email||!password)return showAuthErr('reg-err','All fields are required.');setBtn('btn-register',true);const d=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})}).then(r=>r.json());setBtn('btn-register',false,'Create Account');if(d.success)launchApp(d.username);else showAuthErr('reg-err',d.error);}
+async function doLogout(){await fetch('/api/logout',{method:'POST'});location.reload();}
+
+function launchApp(username){$('auth-screen').style.display='none';$('header-username').textContent=username;loadProfile();['j-sleep-quality','j-rpe','j-motivation'].forEach(id=>{const el=$(id);if(el)updateScale(el,id==='j-sleep-quality'?'j-sq-val':id==='j-rpe'?'j-rpe-val':'j-mot-val');});$('j-date').value=new Date().toISOString().split('T')[0];}
+window.addEventListener('load',async()=>{const d=await fetch('/api/me').then(r=>r.json());if(d.loggedIn)launchApp(d.username);});
+$('li-pass').addEventListener('keydown',e=>e.key==='Enter'&&doLogin());
+$('reg-pass').addEventListener('keydown',e=>e.key==='Enter'&&doRegister());
+
+// ── PROFILE ──
+function obNext(step){[1,2,3].forEach(n=>{const s=$(`ob-step-${n}`);if(s)s.style.display='none';});$(`ob-step-${step}`).style.display='block';$('ob-progress').style.width={1:'33%',2:'66%',3:'100%'}[step];}
+async function loadProfile(){const d=await fetch('/api/profile').then(r=>r.json());if(!d.profile)return;const p=d.profile;if(p.name)$('ob-name').value=p.name;if(p.age)$('ob-age').value=p.age;if(p.sport)$('ob-sport').value=p.sport;if(p.event_date)$('ob-event-date').value=p.event_date;if(p.desired_phase)$('ob-desired-phase').value=p.desired_phase;if(p.cycles_data)$('ob-cycles-data').value=p.cycles_data;if(p.cycle_status)document.querySelectorAll('#ob-cycle-status .check-pill').forEach(pill=>{if(pill.textContent.trim()===p.cycle_status)pill.classList.add('selected');});if(p.training_load)document.querySelectorAll('#ob-training-load .check-pill').forEach(pill=>{if(pill.textContent.trim()===p.training_load)pill.classList.add('selected');});if(p.acl_history)document.querySelectorAll('#ob-acl .check-pill').forEach(pill=>{if(pill.textContent.trim()===p.acl_history)pill.classList.add('selected');});try{const goals=JSON.parse(p.goals||'[]');document.querySelectorAll('#ob-goals .check-pill').forEach(pill=>{if(goals.includes(pill.textContent.trim()))pill.classList.add('selected');});}catch(e){}}
+async function saveProfile(){setBtn('btn-save-profile',true);const goals=[...document.querySelectorAll('#ob-goals .check-pill.selected')].map(p=>p.textContent.trim());const body={name:$('ob-name').value,age:$('ob-age').value,cycle_status:document.querySelector('#ob-cycle-status .check-pill.selected')?.textContent?.trim()||'',goals,sport:$('ob-sport').value,event_date:$('ob-event-date').value,desired_phase:$('ob-desired-phase').value,cycles_data:$('ob-cycles-data').value,training_load:document.querySelector('#ob-training-load .check-pill.selected')?.textContent?.trim()||'',acl_history:document.querySelector('#ob-acl .check-pill.selected')?.textContent?.trim()||''};const d=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());setBtn('btn-save-profile',false,'Save Profile ✓');if(d.success){toast('✅ Profile saved!');$('ob-step-3').innerHTML=`<div class="success-box"><span class="big-icon">🌕</span><h2>Profile Saved!</h2><p>Your information is stored on the server and loads automatically when you sign in.</p><br/><button class="btn-primary btn-sm" onclick="showPage('journal',document.querySelector('#app-nav button:nth-child(3)'))">Start Journaling →</button></div>`;}}
+
+// ── JOURNAL ──
+async function saveJournal(){setBtn('btn-save-journal',true);const recoverySteps=[...document.querySelectorAll('#j-recovery .check-pill.selected')].map(p=>p.textContent.trim());const body={entry_date:$('j-date').value,cycle_day:$('j-cycle-day').value||null,phase:document.querySelector('#j-phase .check-pill.selected')?.textContent?.trim()||'',hrv:$('j-hrv').value,sleep_quality:$('j-sleep-quality').value,sleep_hours:$('j-sleep-hrs').value||null,energy:document.querySelector('#j-energy .check-pill.selected')?.textContent?.trim()||'',soreness:document.querySelector('#j-soreness .check-pill.selected')?.textContent?.trim()||'',pain_notes:$('j-pain-notes').value,workout:$('j-workout').value,rpe:$('j-rpe').value,motivation:$('j-motivation').value,perf_notes:$('j-perf-notes').value,flow:document.querySelector('#j-flow .check-pill.selected')?.textContent?.trim()||'',cramps:document.querySelector('#j-cramps .check-pill.selected')?.textContent?.trim()||'',mucus:document.querySelector('#j-mucus .check-pill.selected')?.textContent?.trim()||'',digestion:$('j-digestion').value,symptom_time:document.querySelector('#j-sym-time .check-pill.selected')?.textContent?.trim()||'',mood:document.querySelector('#j-mood .check-pill.selected')?.textContent?.trim()||'',cognitive:document.querySelector('#j-cog .check-pill.selected')?.textContent?.trim()||'',social:document.querySelector('#j-social .check-pill.selected')?.textContent?.trim()||'',cravings:$('j-cravings').value,hydration:document.querySelector('#j-hydration .check-pill.selected')?.textContent?.trim()||'',recovery_steps:recoverySteps};if(!body.entry_date){toast('⚠️ Please set a date.');setBtn('btn-save-journal',false,"Save Today's Entry ✓");return;}const d=await fetch('/api/journal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());setBtn('btn-save-journal',false,"Save Today's Entry ✓");if(d.success)toast('✅ Entry saved for '+body.entry_date+'!');else toast('❌ Could not save.');}
+
+// ── DASHBOARD ──
+async function loadDashboard(){const d=await fetch('/api/journal').then(r=>r.json());if(!d.success)return;const entries=d.entries;renderEntries(entries);renderInsights(entries);if(entries.length>0){const latest=entries[0];const day=latest.cycle_day||'?';$('dash-cycle-day').innerHTML=`${day}<span>cycle day</span>`;const phase=latest.phase||'';const phaseMap={'Menstrual':'phase-menstrual 🔴 Menstrual','Follicular':'phase-follicular 🌱 Follicular','Ovulatory':'phase-ovulatory ✨ Ovulatory','Luteal':'phase-luteal 🍂 Luteal'};let matched='phase-follicular —';Object.keys(phaseMap).forEach(k=>{if(phase.includes(k))matched=phaseMap[k];});const[cls,...label]=matched.split(' ');$('dash-phase').className=`phase-badge ${cls}`;$('dash-phase').textContent=label.join(' ');$('ring-arc').setAttribute('stroke-dashoffset',Math.max(0,264-(( parseInt(day)||14)/28)*264));}}
+function renderEntries(entries){const c=$('all-entries');if(!entries.length){c.innerHTML='<p class="empty-state">No entries yet.</p>';return;}c.innerHTML=entries.map(e=>`<div class="entry-row"><div><strong style="font-size:0.9rem;">${e.entry_date}</strong><div class="entry-meta">Day ${e.cycle_day||'?'} · ${e.phase||'—'}</div></div><div class="entry-tags">${e.rpe?`<span class="etag">RPE ${e.rpe}</span>`:''} ${e.sleep_quality?`<span class="etag">Sleep ${e.sleep_quality}/10</span>`:''} ${e.energy?`<span class="etag">${e.energy}</span>`:''} ${e.mood?`<span class="etag">${e.mood}</span>`:''}</div><button class="del-btn" onclick="deleteEntry(${e.id})">Delete</button></div>`).join('');}
+async function deleteEntry(id){if(!confirm('Delete this entry?'))return;await fetch(`/api/journal/${id}`,{method:'DELETE'});toast('🗑️ Entry deleted.');loadDashboard();}
+function renderInsights(entries){const box=$('dash-insights');if(entries.length<2){box.innerHTML='<p class="empty-state">Log more entries to see insights here.</p>';return;}const recent=entries.slice(0,7);const avgSleep=(recent.reduce((a,e)=>a+(+e.sleep_quality||5),0)/recent.length).toFixed(1);const avgRPE=(recent.reduce((a,e)=>a+(+e.rpe||5),0)/recent.length).toFixed(1);const avgMot=(recent.reduce((a,e)=>a+(+e.motivation||5),0)/recent.length).toFixed(1);const phases=recent.map(e=>e.phase||'').filter(Boolean);const topPhase=phases.sort((a,b)=>phases.filter(v=>v===b).length-phases.filter(v=>v===a).length)[0]||'—';box.innerHTML=`<p style="font-size:0.84rem;line-height:1.8;color:var(--dark);">📊 <strong>Last ${recent.length} entries:</strong><br/>Avg Sleep: <strong>${avgSleep}/10</strong><br/>Avg RPE: <strong>${avgRPE}/10</strong><br/>Avg Motivation: <strong>${avgMot}/10</strong><br/>Most logged phase: <strong>${topPhase}</strong></p>${entries.length>=3?`<p style="font-size:0.76rem;color:var(--muted);margin-top:0.8rem;">💡 Keep logging to unlock your Power Phase window.</p>`:''}`;;}
+
+function calcReverseMap(){const eventDate=$('rm-date').value,lastPeriod=$('rm-last-period').value,cycleLen=parseInt($('rm-cycle-len').value)||28;if(!eventDate||!lastPeriod){toast('⚠️ Please fill in all fields.');return;}const event=new Date(eventDate),period=new Date(lastPeriod);const daysDiff=Math.round((event-period)/(1000*60*60*24));const cycleDay=((daysDiff%cycleLen)+cycleLen)%cycleLen||cycleLen;let phase,badge,tip;if(cycleDay<=5){phase='Menstrual';badge='phase-menstrual';tip='Focus on rest and mobility. Avoid peak-intensity sessions.';}else if(cycleDay<=13){phase='Follicular';badge='phase-follicular';tip='Rising energy — great for strength and high-intensity work!';}else if(cycleDay<=17){phase='Ovulatory';badge='phase-ovulatory';tip='⭐ Peak performance window. Schedule your hardest sessions here!';}else{phase='Luteal';badge='phase-luteal';tip='Endurance-friendly. Watch for late-luteal fatigue and prioritize recovery.';}$('rm-result').style.display='block';$('rm-result-content').innerHTML=`<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;"><div><p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.3rem;">On <strong>${eventDate}</strong> you'll be approximately:</p><span style="font-family:'Cormorant Garamond',serif;font-size:1.45rem;color:var(--crimson);font-weight:600;">Cycle Day ${cycleDay}</span><div style="margin-top:0.4rem;"><span class="phase-badge ${badge}">${phase} Phase</span></div></div><div style="flex:1;background:var(--petal);border-radius:12px;padding:0.85rem 1rem;min-width:200px;"><p style="font-size:0.82rem;color:var(--dark);line-height:1.6;">💡 <em>${tip}</em></p></div></div>`;}
+
+// ══════════════════════
+//  AI CHAT
+// ══════════════════════
+let currentSessionId = null;
+let chatBotReady = false;
+
+const SUGGESTIONS = [
+  "What phase am I likely in today?",
+  "How should I train this week?",
+  "Why do I feel so tired right now?",
+  "What should I eat during my luteal phase?",
+  "How can I reduce injury risk?",
+  "Help me plan for my upcoming race",
+  "Why is my motivation so low lately?",
+  "Tell me about the ovulatory phase"
+];
+
+async function initChatPage() {
+  if (chatBotReady) return;
+  chatBotReady = true;
+  await loadSessions();
+  await loadChatInsights();
+
+  // Load current session history
+  const d = await fetch('/api/chat/history').then(r => r.json());
+  if (d.success) {
+    currentSessionId = d.sessionId;
+    $('chat-messages').innerHTML = '';
+    if (d.messages.length === 0) {
+      addMsg("Hi! I'm Luna 🌙 I'm your personal cycle intelligence guide, and I already have access to your profile and journal data. What's on your mind today — training, recovery, how you're feeling, or something else?", 'bot');
+    } else {
+      d.messages.forEach(m => addMsg(m.content, m.role === 'assistant' ? 'bot' : 'user', false));
+    }
+    showSuggestions();
+    updateSessionLabel();
+  }
+}
+
+async function loadSessions() {
+  const d = await fetch('/api/chat/sessions').then(r => r.json());
+  if (!d.success) return;
+  const list = $('session-list');
+  list.innerHTML = d.sessions.length === 0
+    ? '<p style="padding:0.8rem 1.1rem;font-size:0.78rem;color:var(--muted);">No past chats yet.</p>'
+    : d.sessions.map(s => `
+      <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession(${s.id})">
+        <div>
+          <div class="s-name">${s.session_name}</div>
+          <div class="s-date">${new Date(s.created_at).toLocaleDateString()}</div>
+        </div>
+        <button class="s-del" onclick="event.stopPropagation();deleteSession(${s.id})">✕</button>
+      </div>`).join('');
+}
+
+async function loadSession(id) {
+  const d = await fetch(`/api/chat/session/${id}`).then(r => r.json());
+  if (!d.success) return;
+  currentSessionId = id;
+  $('chat-messages').innerHTML = '';
+  d.messages.forEach(m => addMsg(m.content, m.role === 'assistant' ? 'bot' : 'user', false));
+  $('chat-session-label').textContent = d.session.session_name;
+  await loadSessions();
+  showSuggestions();
+}
+
+async function startNewChat() {
+  const d = await fetch('/api/chat/new-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: `Chat — ${new Date().toLocaleDateString()}` }) }).then(r => r.json());
+  if (d.success) {
+    currentSessionId = d.sessionId;
+    $('chat-messages').innerHTML = '';
+    addMsg("Hi again! 🌙 I'm starting a fresh conversation. What would you like to talk about today?", 'bot');
+    await loadSessions();
+    showSuggestions();
+    $('chat-session-label').textContent = `Chat — ${new Date().toLocaleDateString()}`;
+  }
+}
+
+async function deleteSession(id) {
+  if (!confirm('Delete this conversation?')) return;
+  await fetch(`/api/chat/session/${id}`, { method: 'DELETE' });
+  if (id === currentSessionId) {
+    currentSessionId = null;
+    chatBotReady = false;
+    await initChatPage();
+  } else {
+    await loadSessions();
+  }
+  toast('🗑️ Conversation deleted.');
+}
+
+async function loadChatInsights() {
+  const d = await fetch('/api/chat/insights').then(r => r.json());
+  const box = $('insights-list');
+  if (!d.success || !d.insights.length) {
+    box.innerHTML = '<p style="font-size:0.75rem;color:var(--muted);">Chat with Luna to unlock insights about your patterns.</p>';
+    return;
+  }
+  const catEmoji = { cycle_pattern: '🔄', performance: '🏃', recovery: '💤', nutrition: '🥗', injury_risk: '⚠️', mental_health: '🧠', goal: '🎯' };
+  box.innerHTML = d.insights.slice(0, 5).map(i => `<span class="insight-tag"><span class="cat">${catEmoji[i.category]||'💡'} ${i.category.replace('_',' ')}</span>${i.insight}</span>`).join('');
+}
+
+function updateSessionLabel() {
+  // Find active session name
+  const active = document.querySelector('.session-item.active .s-name');
+  $('chat-session-label').textContent = active ? active.textContent : '';
+}
+
+function showSuggestions() {
+  const s = $('suggestions');
+  // Pick 3 random suggestions
+  const picks = SUGGESTIONS.sort(() => Math.random() - 0.5).slice(0, 3);
+  s.innerHTML = picks.map(q => `<button class="sug-btn" onclick="useSuggestion('${q.replace(/'/g,"\\'")}')"> ${q}</button>`).join('');
+}
+
+function useSuggestion(text) {
+  $('chat-input').value = text;
+  sendChat();
+}
+
+function addMsg(text, type, scroll = true) {
+  const msgs = $('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  // Convert markdown-style line breaks
+  const formatted = text.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  div.innerHTML = type === 'bot'
+    ? `<div class="bot-icon">🌙</div><div class="bubble">${formatted}</div>`
+    : `<div class="bubble">${formatted}</div>`;
+  msgs.appendChild(div);
+  if (scroll) msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = $('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="bot-icon">🌙</div><div class="bubble"><div class="typing-bubble"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = $('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendChat() {
+  const input = $('chat-input');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  $('suggestions').innerHTML = '';
+  addMsg(message, 'user');
+  input.disabled = true;
+  $('send-btn').disabled = true;
+  showTyping();
+
+  try {
+    const d = await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, sessionId: currentSessionId })
+    }).then(r => r.json());
+
+    removeTyping();
+    input.disabled = false;
+    $('send-btn').disabled = false;
+    input.focus();
+
+    if (d.success) {
+      addMsg(d.reply, 'bot');
+      currentSessionId = d.sessionId;
+      showSuggestions();
+      // Refresh insights quietly in background
+      loadChatInsights();
+      // Mark active session
+      document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
+      const match = [...document.querySelectorAll('.session-item')].find(el => el.onclick?.toString().includes(d.sessionId));
+      if (match) match.classList.add('active');
+    } else {
+      addMsg("I'm having trouble connecting right now. " + (d.error || 'Please try again.'), 'bot');
+      if (d.error && d.error.includes('API_KEY')) {
+        $('api-warning').style.display = 'block';
+      }
+    }
+  } catch (err) {
+    removeTyping();
+    input.disabled = false;
+    $('send-btn').disabled = false;
+    addMsg("Connection error. Please check your internet and try again.", 'bot');
+  }
+}
+</script>
+</body>
+</html>
